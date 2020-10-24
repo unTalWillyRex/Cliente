@@ -8,7 +8,7 @@
 #include <stdint.h>
 #define PORT 8080
 #define DATA_LEN 1024
-
+//estrcutura mensaje
 struct msj{
 	
 	int8_t numSeq;
