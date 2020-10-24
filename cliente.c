@@ -5,7 +5,19 @@
 #include <sys/socket.h> 
 #include <arpa/inet.h> 
 #include <string.h> 
-#define PORT 8080 
+#include <stdint.h>
+#define PORT 8080
+#define DATA_LEN 1024
+//estrcutura mensaje
+struct msj{
+	
+	int8_t numSeq;
+	int CRC8;	
+	char data[DATA_LEN];
+	int16_t lenght;
+	int8_t tipo;
+}; 
+typedef struct msj MSJ;
    
 int getSock()
 {
@@ -51,7 +63,26 @@ struct sockaddr_in setConnect(int sock, struct sockaddr_in serv_addr)
 
 void escribirArchivo(int sock,int valread,char newBuffer[1024]){
 }
-	
+
+float obtenConfirmacion(){
+	return  ((rand()%10000)/100.0f);//maximo 99.99
+}
+
+float obtenTemporizador(){
+	return  ((rand()%6000)/100.0f);//maximo 60.0 seg
+}
+
+int obtenValor(char* errorOTiempo, char *porError, char* porTem){
+
+	if(strcmp(errorOTiempo,"-e")==0){
+		return atof(porError);
+	}else if(strcmp(errorOTiempo,"-p")==0){
+		return atof(porTem);
+	}else{
+		return 0.0;
+	}
+
+}	
 
 int main(int argc, char const *argv[]) 
 { 
@@ -63,6 +94,30 @@ int main(int argc, char const *argv[])
     char newBuffer[1024]={0};
     char direccion[100];
     char bandera[1];
+    
+    float errorMax;
+    float tempMax;
+    char* error=strdup(argv[1]);
+    char* temp = strdup(argv[2]);
+    char* porError = strdup(argv[3]);//obtencion de los porcentajes de error y tiempo
+    char* porTemp = strdup(argv[4]);
+    float nuevoError;
+    float nuevoTemp;
+    MSJ mensaje;
+    mensaje.lenght=0;
+    mensaje.tipo=0;
+    mensaje.numSeq=0;
+    mensaje.CRC8=0;
+    
+    
+    /*int8_t numSeq;
+	int CRC8;	
+	char data[DATA_LEN];
+	int16_t lenght;
+	int8_t tipo;*/
+    
+    errorMax = obtenValor(error,porError,porTemp);
+    tempMax = obtenValor(temp,porError,porTemp);
     
     
     
@@ -89,8 +144,8 @@ int main(int argc, char const *argv[])
     	archivoCopia = fopen (direccion, "wb");//abrimos el archivoCopia para escribir la informacion del servidor 
 
 	//mientras numero de datos leidos != 0, dejamos de escribir
-    	while((valread = read(sock, &newBuffer, 1024)) != 0){
-			fwrite(&newBuffer, 1, valread, archivoCopia);
+    	while((read(sock, &mensaje, sizeof(mensaje))) != 0){
+			fwrite(&mensaje.data, 1, mensaje.lenght, archivoCopia);
     	}
     	
 	printf("El archivo %s, se a descargado exitosamente del servidor \n",direccion);
